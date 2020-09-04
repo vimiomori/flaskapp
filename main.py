@@ -3,6 +3,7 @@ from bson import ObjectId
 from datetime import datetime
 from flask import render_template, Flask, abort, request, redirect, url_for
 from flask_api import FlaskAPI
+# from operations import Operations
 from pymongo import MongoClient
 
 app = FlaskAPI(__name__)
@@ -55,8 +56,8 @@ def update(task):
         update = {
             '$set': dict(list(task.items())[1:])
         }
-        tasks_collection.update_one(filter, update)
-        return task
+        result = tasks_collection.update_one(filter, update)
+        return result.modified_count, task
 
 
 def delete(_id):
@@ -78,25 +79,40 @@ def task_details(task_id):
             return f"Error: Failed to delete task (id: {task_id})", 400
         return '', 204
 
+
 @app.route('/api/tasks', methods=['GET', 'POST', 'PUT'])
 def tasks():
     if request.method == 'GET':
         return {'tasks': find()}, 200
     elif request.method == 'POST':
+        if not (is_validate(request.data)):
+            return f"JSON is invalid", 400
+        # return insert(request.data), 201
         return insert(request.data), 201
     elif request.method == 'PUT':
-        return update(request.data), 200
+        if not (is_validate(request.data)):
+            return f"JSON is invalid", 400
+        modified_count, task = update(request.data)
+        if modified_count != 1:
+            return f"Error: Failed to update task (id: {request.data['_id']}", 400
+        return task, 200
+
+
+def is_validate(data):
+    for key in data.keys():
+        if key not in ['content', 'do_by', 'done']:
+            return False
+    return True
 
 
 @app.errorhandler(404)
 def handle_404(exception):
-   return {'message': 'Error: Resource not found.'}, 404
-    # return "Page not found", 404
+    return {'message': 'Error: Resource not found.'}, 404
 
 
 @app.errorhandler(500)
 def handle_404(exception):
-   return {'message': 'Please contact the administrator.'}, 500
+    return {'message': 'Please contact the administrator.'}, 500
 
 
 if __name__ == '__main__':
