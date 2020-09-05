@@ -27,8 +27,6 @@ def tasks():
     if request.method == 'GET':
         return Operations().find()
     elif request.method == 'POST':
-        if type(request.data) == list:
-            return "Testing", 200  #TODO
         return Operations().insert(request.data)
     elif request.method == 'PUT':
         return Operations().update(request.data)

@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime
 from bson import ObjectId
 from pymongo import MongoClient
 
+
+logging.getLogger().setLevel(logging.DEBUG)
 
 class Operations:
 
@@ -11,18 +14,15 @@ class Operations:
         self.tasks_collection = self.db.tasks_collection
     
     def insert(self, data):
-        task = {
-            "content": data['content'],
-            "do_by": self._convert_time(data['do_by']),
-            "done": data['done']
-        }
-        result = self.tasks_collection.insert_one(task)
-        task['_id'] = str(result.inserted_id)
-        self.client.close()
+        if type(data) == list:
+            if not all([self.is_validate(d) for d in data]):
+                return f"JSON is invalid", 400
+            return self._insert_many(data)
+
         if not (self.is_validate(data)):
             return f"JSON is invalid", 400
-        return task, 200
-    
+        return self._insert_one(data)
+
     def find(self):
         tasks = []
         for task in self.tasks_collection.find():
@@ -62,11 +62,35 @@ class Operations:
             return f"Error: Failed to delete task (id: {_id})", 400
         return '', 204
 
-    def is_validate(self, data):
+    def _insert_many(self, data):
+        tasks = [self._make_task(d) for d in data]
+        result = self.tasks_collection.insert_many(tasks)
+        for i, task in enumerate(tasks):
+            task['_id'] = str(result.inserted_ids[i])
+        self.client.close()
+        return {'tasks': tasks}, 200
+    
+    def _insert_one(self, data):
+        task = self._make_task(data)
+        result = self.tasks_collection.insert_one(task)
+        task['_id'] = str(result.inserted_id)
+        self.client.close()
+        return task, 200
+    
+    def _make_task(self, data):
+        return {
+            "content": data['content'],
+            "do_by": self._convert_time(data['do_by']),
+            "done": data['done']
+        }
+
+    @staticmethod
+    def is_validate(data):
         for key in data.keys():
             if key not in ['_id', 'content', 'do_by', 'done']:
                 return False
         return True
 
-    def _convert_time(self, date):
+    @staticmethod
+    def _convert_time(date):
         return datetime.strptime(date, "%m/%d/%Y")
