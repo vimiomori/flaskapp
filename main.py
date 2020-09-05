@@ -72,38 +72,22 @@ def home():
 @app.route('/api/tasks/<task_id>', methods=['GET', 'DELETE'])
 def task_details(task_id):
     if request.method == 'GET':
-        return Operations().find_by(task_id), 200
+        return Operations().find_by(task_id)
     elif request.method == 'DELETE':
-        deleted_count = Operations().delete(task_id)
-        if deleted_count != 1:
-            return f"Error: Failed to delete task (id: {task_id})", 400
-        return '', 204
+        return Operations().delete(task_id)
 
 
 @app.route('/api/tasks', methods=['GET', 'POST', 'PUT'])
 def tasks():
     if request.method == 'GET':
-        return {'tasks': Operations().find()}, 200
+        return Operations().find()
     elif request.method == 'POST':
-        if not (is_validate(request.data)):
-            return f"JSON is invalid", 400
+        if type(request.data) == list:
+            return "Testing", 200  #TODO
         # return insert(request.data), 201
-        return Operations().insert(request.data), 201
+        return Operations().insert(request.data)
     elif request.method == 'PUT':
-        if not (is_validate(request.data)):
-            return f"JSON is invalid", 400
-        modified_count, task = Operations().update(request.data)
-        if modified_count != 1:
-            return f"Error: Failed to update task (id: {request.data['_id']}", 400
-        return task, 200
-
-
-def is_validate(data):
-    for key in data.keys():
-        if key not in ['_id', 'content', 'do_by', 'done']:
-            logging.debug(key)
-            return False
-    return True
+        return Operations().update(request.data)
 
 
 @app.errorhandler(404)
