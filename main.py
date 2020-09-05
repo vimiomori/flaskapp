@@ -14,61 +14,6 @@ def home():
     return redirect(url_for('tasks'))
 
 
-# def insert(data):
-#     with MongoClient("127.0.0.1", 27017) as client:
-#         db = client.todo_app
-#         tasks_collection = db.tasks_collection
-#         task = {
-#             "content": data['content'],
-#             "do_by": datetime.strptime(data['do_by'], "%m/%d/%Y"),
-#             "done": data['done']
-#         }
-#         result = tasks_collection.insert_one(task)
-#         task['_id'] = str(result.inserted_id)
-#         return task
-
-
-# def find():
-#     with MongoClient("127.0.0.1", 27017) as client:
-#         db = client.todo_app
-#         tasks_collection = db.tasks_collection
-#         tasks = []
-#         for task in tasks_collection.find():
-#             task['_id'] = str(task['_id'])
-#             tasks.append(task)
-#         return tasks
-
-
-# def find_by(_id):
-#     with MongoClient("127.0.0.1", 27017) as client:
-#         db = client.todo_app
-#         tasks_collection = db.tasks_collection
-#         task = tasks_collection.find_one({'_id': ObjectId(_id)})
-#         task['_id'] = str(task['_id'])
-#         return task
-
-
-# def update(task):
-#     with MongoClient("127.0.0.1", 27017) as client:
-#         db = client.todo_app
-#         tasks_collection = db.tasks_collection
-#         filter = {'_id': ObjectId(task['_id'])}
-#         update = {
-#             '$set': dict(list(task.items())[1:])
-#         }
-#         result = tasks_collection.update_one(filter, update)
-#         return result.modified_count, task
-
-
-# def delete(_id):
-#     with MongoClient("127.0.0.1", 27017) as client:
-#         db = client.todo_app
-#         tasks_collection = db.tasks_collection
-#         filter = {'_id': ObjectId(str(_id))}
-#         result = tasks_collection.delete_one(filter)
-#         return result.deleted_count
-
-
 @app.route('/api/tasks/<task_id>', methods=['GET', 'DELETE'])
 def task_details(task_id):
     if request.method == 'GET':
@@ -84,7 +29,6 @@ def tasks():
     elif request.method == 'POST':
         if type(request.data) == list:
             return "Testing", 200  #TODO
-        # return insert(request.data), 201
         return Operations().insert(request.data)
     elif request.method == 'PUT':
         return Operations().update(request.data)

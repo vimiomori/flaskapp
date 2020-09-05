@@ -13,7 +13,7 @@ class Operations:
     def insert(self, data):
         task = {
             "content": data['content'],
-            "do_by": datetime.strptime(data['do_by'], "%m/%d/%Y"),
+            "do_by": self._convert_time(data['do_by']),
             "done": data['done']
         }
         result = self.tasks_collection.insert_one(task)
@@ -40,10 +40,14 @@ class Operations:
     def update(self, task):
         if not (self.is_validate(task)):
             return f"JSON is invalid", 400
-        filter = {'_id': ObjectId(task['_id'])}
+
+        if task.get('do_by'):
+            task['do_by'] = self._convert_time(task['do_by'])
+
         update = {
             '$set': dict(list(task.items())[1:])
         }
+        filter = {'_id': ObjectId(task['_id'])}
         result = self.tasks_collection.update_one(filter, update)
         self.client.close()
         if result.modified_count != 1:
@@ -63,3 +67,6 @@ class Operations:
             if key not in ['_id', 'content', 'do_by', 'done']:
                 return False
         return True
+
+    def _convert_time(self, date):
+        return datetime.strptime(date, "%m/%d/%Y")
